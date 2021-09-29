@@ -157,7 +157,7 @@ def create_grid(locked_positions={}):
         for x, _ in enumerate(row):
             if (x, y) in locked_positions:
                 pos = locked_positions[(x, y)]
-                grid[x][y] = pos
+                grid[y][x] = pos
 
     return grid
 
@@ -201,7 +201,7 @@ def check_lost(positions):
 
 
 def get_shape():
-    return Piece(5, -1, random.choice(shapes))
+    return Piece(5, 0, random.choice(shapes))
 
 
 def draw_text_middle(text, size, color, surface):
@@ -238,23 +238,24 @@ def draw_window(surface, grid):
     center = top_left_x + play_width / 2 - label.get_width() / 2
     surface.blit(label, (center, 25))
     for y, row in enumerate(grid):
-        for x, formacol in enumerate(row):
+        for x, col in enumerate(row):
             width = block_size
             height = block_size
             left = top_left_x + x * width
             top = top_left_y + y * height
-            pygame.draw.rect(surface, formacol, (left, top, width, height))
+            pygame.draw.rect(surface, col, (left, top, width, height))
 
-    pygame.draw.rect(surface, (255, 0, 0),
-                     (top_left_x, top_left_y, play_width, play_height))
     draw_grid(surface, grid)
+    pygame.draw.rect(surface, (255, 0, 0),
+                     (top_left_x, top_left_y, play_width, play_height), 5)
+
     pygame.display.update()
 
 
 def main(win):
     locked_positions = {}
     grid = create_grid(locked_positions)
-    change_piece = True
+    change_piece = False
     run = True
     current_piece = get_shape()
     next_piece = get_shape()
