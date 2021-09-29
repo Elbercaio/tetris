@@ -9,9 +9,10 @@ import random
 # - draw_window
 # - rotating shape in main
 # - setting up the main
-
+# TODO: score, aumentar velocidade, guardar peça, drop instantaneo,
+#       visuais melhores, som
 """
-10 x 20 square grid
+10 x 40 grid
 shapes: S, Z, I, O, J, L, T
 represented in order by 0 - 6
 """
@@ -19,121 +20,140 @@ represented in order by 0 - 6
 pygame.font.init()
 
 # GLOBALS VARS
-s_width = 800
-s_height = 600
-play_width = 250  # meaning 300 // 10 = 30 width per block
-play_height = 500  # meaning 600 // 20 = 20 height per block
-block_size = 25
-
+block_size = 20
+col_number = 10
+row_number = 20
+play_width = block_size * col_number
+play_height = block_size * row_number
+s_width = play_width + 400
+s_height = play_height + 100
 top_left_x = (s_width - play_width) // 2
 top_left_y = s_height - play_height
 
-
 # SHAPE FORMATS
 
-S = [['.....',
+S = [['......',
       '......',
+      '...00.',
       '..00..',
+      '......',
+      '......'],
+     ['......',
+      '..0...',
+      '..00..',
+      '...0..',
+      '......',
+      '......']]
+
+Z = [['......',
+      '......',
       '.00...',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..00.',
-      '...0.',
-      '.....']]
+      '..00..',
+      '......',
+      '......'],
+     ['......',
+      '...0..',
+      '..00..',
+      '..0...',
+      '......',
+      '......']]
 
-Z = [['.....',
-      '.....',
-      '.00..',
-      '..00.',
-      '.....'],
-     ['.....',
-      '..0..',
-      '.00..',
-      '.0...',
-      '.....']]
+Hero = [['......',  # I
+         '..0...',
+         '..0...',
+         '..0...',
+         '..0...',
+         '......'],
+        ['......',
+         '......',
+         '.0000.',
+         '......',
+         '......',
+         '......']]
 
-I = [['..0..',
-      '..0..',
-      '..0..',
-      '..0..',
-      '.....'],
-     ['.....',
-      '0000.',
-      '.....',
-      '.....',
-      '.....']]
+Smashboy = [['......',  # O
+             '......',
+             '..00..',
+             '..00..',
+             '......',
+             '......']]
 
-O = [['.....',
-      '.....',
-      '.00..',
-      '.00..',
-      '.....']]
+J = [['......',
+      '......',
+      '..0...',
+      '..000.',
+      '......',
+      '......', ],
+     ['......',
+      '..00..',
+      '..0...',
+      '..0...',
+      '......',
+      '......'],
+     ['......',
+      '......',
+      '.000..',
+      '...0..',
+      '......',
+      '......'],
+     ['......',
+      '...0..',
+      '...0..',
+      '..00..',
+      '......',
+      '.......']]
 
-J = [['.....',
-      '.0...',
-      '.000.',
-      '.....',
-      '.....'],
-     ['.....',
-      '..00.',
-      '..0..',
-      '..0..',
-      '.....'],
-     ['.....',
-      '.....',
-      '.000.',
-      '...0.',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..0..',
-      '.00..',
-      '.....']]
+L = [['......',
+      '......',
+      '...0..',
+      '.000..',
+      '......',
+      '......'],
+     ['......',
+      '..0...',
+      '..0...',
+      '..00..',
+      '......',
+      '......'],
+     ['......',
+      '......',
+      '.000..',
+      '.0....',
+      '......',
+      '......'],
+     ['......',
+      '..00..',
+      '...0..',
+      '...0..',
+      '......',
+      '......']]
 
-L = [['.....',
-      '...0.',
-      '.000.',
-      '.....',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..0..',
-      '..00.',
-      '.....'],
-     ['.....',
-      '.....',
-      '.000.',
-      '.0...',
-      '.....'],
-     ['.....',
-      '.00..',
-      '..0..',
-      '..0..',
-      '.....']]
+T = [['......',
+      '..0...',
+      '.000..',
+      '......',
+      '......',
+      '......'],
+     ['......',
+      '..0...',
+      '..00..',
+      '..0...',
+      '......',
+      '......'],
+     ['......',
+      '......',
+      '.000..',
+      '..0...',
+      '......',
+      '......'],
+     ['......',
+      '..0...',
+      '.00...',
+      '..0...',
+      '......',
+      '......']]
 
-T = [['.....',
-      '..0..',
-      '.000.',
-      '.....',
-      '.....'],
-     ['.....',
-      '..0..',
-      '..00.',
-      '..0..',
-      '.....'],
-     ['.....',
-      '.....',
-      '.000.',
-      '..0..',
-      '.....'],
-     ['.....',
-      '..0..',
-      '.00..',
-      '..0..',
-      '.....']]
-
-shapes = [S, Z, I, O, J, L, T]
+shapes = [S, Z, Hero, Smashboy, J, L, T]
 shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0),
                 (255, 165, 0), (0, 0, 255), (128, 0, 128)]
 # index 0 - 6 represent shape
@@ -150,7 +170,7 @@ class Piece():
 
 def create_grid(locked_positions={}):
     # gerar grid vazio
-    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
+    grid = [[(0, 0, 0) for _ in range(col_number)] for _ in range(row_number)]
 
     # checar se existe posição já preenchida
     for y, row in enumerate(grid):
@@ -179,8 +199,8 @@ def convert_shape_format(shape):
 
 
 def valid_space(shape, grid):
-    accepted_pos = [(j, i) for j in range(10) for i in range(20)
-                    if grid[i][j] == (0, 0, 0)]
+    accepted_pos = [(j, i) for j in range(col_number)
+                    for i in range(row_number) if grid[i][j] == (0, 0, 0)]
 
     formatted = convert_shape_format(shape)
 
@@ -223,11 +243,42 @@ def draw_grid(surface, grid):
 
 
 def clear_rows(grid, locked):
-    pass
+    inc = 0
+    for i in range(len(grid) - 1, -1, -1):
+        row = grid[i]
+        if (0, 0, 0) not in row:
+            inc += 1
+            idx = i
+            for j, _ in enumerate(row):
+                try:
+                    del locked[(j, i)]
+                except Exception:
+                    continue
+
+    if inc > 0:
+        for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
+            x, y = key
+            if y < idx:
+                newKey = (x, y + inc)
+                locked[newKey] = locked.pop(key)
 
 
 def draw_next_shape(shape, surface):
-    pass
+    font = pygame.font.Font(pygame.font.get_default_font(), 20)
+    label = font.render('Próxima peça', 1, (255, 255, 255))
+
+    sx = top_left_x + play_width + 45
+    sy = top_left_y + play_height / 2 - 100
+    surface.blit(label, (sx - 15, sy - 30))
+    form = shape.shape[shape.rotation % len(shape.shape)]
+
+    for y, line in enumerate(form):
+        row = list(line)
+        for x, col in enumerate(row):
+            if col == '0':
+                rect = (sx + x * block_size, sy + y * block_size,
+                        block_size, block_size)
+                pygame.draw.rect(surface, shape.color, rect, 0)
 
 
 def draw_window(surface, grid):
@@ -248,8 +299,6 @@ def draw_window(surface, grid):
     draw_grid(surface, grid)
     pygame.draw.rect(surface, (255, 0, 0),
                      (top_left_x, top_left_y, play_width, play_height), 5)
-
-    pygame.display.update()
 
 
 def main(win):
@@ -309,8 +358,11 @@ def main(win):
             current_piece = next_piece
             next_piece = get_shape()
             change_piece = False
+            clear_rows(grid, locked_positions)
 
         draw_window(window, grid)
+        draw_next_shape(next_piece, window)
+        pygame.display.update()
 
         if check_lost(locked_positions):
             run = False
