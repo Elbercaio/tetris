@@ -163,7 +163,17 @@ def create_grid(locked_positions={}):
 
 
 def convert_shape_format(shape):
-    pass
+    positions = []
+    form = shape.shape[shape.rotation % len(shape.shape)]
+
+    for y, line in enumerate(form):
+        row = list(line)
+        for x, col in enumerate(row):
+            if col == '0':
+                positions.append((shape.x + x, shape.y + y))
+
+    for i, pos in enumerate(positions):
+        positions[i] = (pos[0] - 2, pos[1] - 4)
 
 
 def valid_space(shape, grid):
@@ -183,16 +193,17 @@ def draw_text_middle(text, size, color, surface):
 
 
 def draw_grid(surface, grid):
+    sx = top_left_x
+    sy = top_left_y
     for y, row in enumerate(grid):
-        for x, color in enumerate(row):
-            width = block_size
-            height = block_size
-            left = top_left_x + x * width
-            top = top_left_y + y * height
-            pygame.draw.rect(surface, color, (left, top, width, height))
-
-    pygame.draw.rect(surface, (255, 0, 0),
-                     (top_left_x, top_left_y, play_width, play_height))
+        start_pos_row = (sx, sy + y * block_size)
+        end_pos_row = (sx + play_width, sy + y * block_size)
+        pygame.draw.line(surface, (128, 128, 128), start_pos_row, end_pos_row)
+        for x, col in enumerate(row):
+            start_pos_col = (sx + x * block_size, sy)
+            end_pos_col = (sx + x * block_size, sy + play_height)
+            pygame.draw.line(surface, (128, 128, 128), start_pos_col,
+                             end_pos_col)
 
 
 def clear_rows(grid, locked):
@@ -203,13 +214,23 @@ def draw_next_shape(shape, surface):
     pass
 
 
-def draw_window(surface):
+def draw_window(surface, grid):
     surface.fill((0, 0, 0))
 
     font = pygame.font.Font(pygame.font.get_default_font(), 60)
     label = font.render('Tetris', 1, (255, 255, 255))
     center = top_left_x + play_width / 2 - label.get_width() / 2
     surface.blit(center, 25)
+    for y, row in enumerate(grid):
+        for x, formacol in enumerate(row):
+            width = block_size
+            height = block_size
+            left = top_left_x + x * width
+            top = top_left_y + y * height
+            pygame.draw.rect(surface, formacol, (left, top, width, height))
+
+    pygame.draw.rect(surface, (255, 0, 0),
+                     (top_left_x, top_left_y, play_width, play_height))
     draw_grid(surface, grid)
     pygame.display.update()
 
