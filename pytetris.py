@@ -153,8 +153,8 @@ def create_grid(locked_positions={}):
     grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
 
     # checar se existe posição já preenchida
-    for y, linha in enumerate(grid):
-        for x, _ in enumerate(linha):
+    for y, row in enumerate(grid):
+        for x, _ in enumerate(row):
             if (x, y) in locked_positions:
                 pos = locked_positions[(x, y)]
                 grid[x][y] = pos
@@ -183,17 +183,35 @@ def draw_text_middle(text, size, color, surface):
 
 
 def draw_grid(surface, row, col):
-    pass
+    for y, row in enumerate(grid):
+        for x, color in enumerate(row):
+            width = block_size
+            height = block_size
+            left = top_left_x + x * width
+            top = top_left_y + y * height
+            pygame.draw.rect(surface, color, (left, top, width, height))
+
+    pygame.draw.rect(surface, (255, 0, 0),
+                     (top_left_x, top_left_y, play_width, play_height))
 
 
 def clear_rows(grid, locked):
+    pass
 
 
 def draw_next_shape(shape, surface):
+    pass
 
 
 def draw_window(surface):
-    pass
+    surface.fill((0, 0, 0))
+
+    font = pygame.font.Font(pygame.font.get_default_font(), 60)
+    label = font.render('Tetris', 1, (255, 255, 255))
+
+    surface.blit(top_left_x + play_width / 2 - label.get_width() / 2, 25)
+
+    pygame.display.update()
 
 
 def main():
