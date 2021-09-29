@@ -9,8 +9,8 @@ import random
 # - draw_window
 # - rotating shape in main
 # - setting up the main
-# TODO: score, aumentar velocidade, guardar peça, drop instantaneo,
-#       visuais melhores, som
+# TODO: guardar peça, drop instantaneo, checkar formula de score, leaderboard
+#       visuais melhores, som, .exe
 """
 10 x 40 grid
 shapes: S, Z, I, O, J, L, T
@@ -224,8 +224,12 @@ def get_shape():
     return Piece(5, 0, random.choice(shapes))
 
 
-def draw_text_middle(text, size, color, surface):
-    pass
+def draw_text_middle(surface, text, size=40, color=(255, 255, 255)):
+    font = pygame.font.Font(pygame.font.get_default_font(), size)
+    label = font.render(text, 1, color)
+    center_x = top_left_x + play_width / 2 - label.get_width() / 2
+    center_y = top_left_y + play_height / 2 - label.get_height() / 2
+    surface.blit(label, (center_x, center_y))
 
 
 def draw_grid(surface, grid):
@@ -261,9 +265,10 @@ def clear_rows(grid, locked):
             if y < idx:
                 newKey = (x, y + inc)
                 locked[newKey] = locked.pop(key)
+    return inc
 
 
-def draw_next_shape(shape, surface):
+def draw_next_shape(surface, shape):
     font = pygame.font.Font(pygame.font.get_default_font(), 20)
     label = font.render('Próxima peça', 1, (255, 255, 255))
 
@@ -281,7 +286,7 @@ def draw_next_shape(shape, surface):
                 pygame.draw.rect(surface, shape.color, rect, 0)
 
 
-def draw_window(surface, grid):
+def draw_window(surface, grid, score=0, highscore=0):
     surface.fill((0, 0, 0))
 
     font = pygame.font.Font(pygame.font.get_default_font(), 60)
@@ -300,6 +305,32 @@ def draw_window(surface, grid):
     pygame.draw.rect(surface, (255, 0, 0),
                      (top_left_x, top_left_y, play_width, play_height), 5)
 
+    font = pygame.font.Font(pygame.font.get_default_font(), 20)
+    sx = top_left_x + play_width + 45
+    sy = top_left_y + play_height / 2 + 160
+    label = font.render(f'Pontuação: {score}', 1, (255, 255, 255))
+    surface.blit(label, (sx - 15, sy - 30))
+    label = font.render(f'Recorde: {highscore}', 1, (255, 255, 255))
+    surface.blit(label, (sx - 10, sy - 10))
+
+
+def update_score(nscore):  # criar leaderboard
+    score = max_score()
+
+    with open('leaderboard.txt') as f:
+        if nscore > score:
+            f.write(str(nscore))
+        else:
+            f.write(str(score))
+
+
+def max_score():
+    with open('leaderboard.txt') as f:
+        lines = f.readlines()
+        score = lines[0].strip()
+
+    return int(score)
+
 
 def main(win):
     locked_positions = {}
@@ -310,12 +341,21 @@ def main(win):
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 0.27
+    fall_speed = 0.4
+    level_time = 0
+    highscore = max_score()
+    score = 0
 
     while run:
         grid = create_grid(locked_positions)
         fall_time += clock.get_rawtime()
+        level_time += clock.get_rawtime()
         clock.tick()
+
+        if level_time / 1000 > 5:
+            level_time = 0
+            if fall_speed > 0.12:
+                fall_speed -= 0.001
 
         if fall_time / 1000 > fall_speed:
             fall_time = 0
@@ -326,6 +366,7 @@ def main(win):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+                pygame.display.quit()
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
@@ -358,20 +399,35 @@ def main(win):
             current_piece = next_piece
             next_piece = get_shape()
             change_piece = False
-            clear_rows(grid, locked_positions)
+            score += clear_rows(grid, locked_positions) * 10
 
-        draw_window(window, grid)
-        draw_next_shape(next_piece, window)
+        draw_window(window, grid, score, highscore)
+        draw_next_shape(window, next_piece)
         pygame.display.update()
 
         if check_lost(locked_positions):
+            draw_text_middle(window, "Derrota", 40, (255, 255, 255))
+            pygame.display.update()
+            pygame.time.delay(1500)
             run = False
-
-    pygame.display.quit()
+            update_score(score)
 
 
 def main_menu(window):
-    main(window)
+    run = True
+    while run:
+        window.fill((0, 0, 0))
+        draw_text_middle(window, 'Aperte qualquer tecla para jogar', 20,
+                         (255, 255, 255))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if (event.type == pygame.KEYDOWN
+                    or event.type == pygame.MOUSEBUTTONDOWN):
+                main(window)
+
+    pygame.display.quit()
 
 
 window = pygame.display.set_mode((s_width, s_height))
