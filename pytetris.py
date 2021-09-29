@@ -144,7 +144,7 @@ class Piece():
         self.x = x
         self.y = y
         self.shape = shape
-        self.shape_color = shape_colors[shapes.index(shapes)]
+        self.color = shape_colors[shapes.index(shape)]
         self.rotation = 0
 
 
@@ -174,6 +174,8 @@ def convert_shape_format(shape):
 
     for i, pos in enumerate(positions):
         positions[i] = (pos[0] - 2, pos[1] - 4)
+
+    return positions
 
 
 def valid_space(shape, grid):
@@ -234,7 +236,7 @@ def draw_window(surface, grid):
     font = pygame.font.Font(pygame.font.get_default_font(), 60)
     label = font.render('Tetris', 1, (255, 255, 255))
     center = top_left_x + play_width / 2 - label.get_width() / 2
-    surface.blit(center, 25)
+    surface.blit(label, (center, 25))
     for y, row in enumerate(grid):
         for x, formacol in enumerate(row):
             width = block_size
@@ -258,8 +260,19 @@ def main(win):
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
+    fall_speed = 0.27
 
     while run:
+        grid = create_grid(locked_positions)
+        fall_time += clock.get_rawtime()
+        clock.tick()
+
+        if fall_time / 1000 > fall_speed:
+            fall_time = 0
+            current_piece.y += 1
+            if not valid_space(current_piece, grid) and current_piece.y > 0:
+                current_piece.y -= 1
+                change_piece = True
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -282,12 +295,30 @@ def main(win):
                     if not valid_space(current_piece, grid):
                         current_piece.rotation -= 1
 
-        draw_window(surface, grid)
+        shape_pos = convert_shape_format(current_piece)
+        for pos in shape_pos:
+            x, y = pos
+            if y > -1:
+                grid[y][x] = current_piece.color
+
+        if change_piece:
+            for pos in shape_pos:
+                x, y = pos
+                locked_positions[(x, y)] = current_piece.color
+            current_piece = next_piece
+            next_piece = get_shape()
+            change_piece = False
+
+        draw_window(window, grid)
+
+        if check_lost(locked_positions):
+            run = False
+
+    pygame.display.quit()
 
 
 def main_menu(window):
     main(window)
-    pass
 
 
 window = pygame.display.set_mode((s_width, s_height))
