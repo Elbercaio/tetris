@@ -20,10 +20,10 @@ pygame.font.init()
 
 # GLOBALS VARS
 s_width = 800
-s_height = 700
-play_width = 300  # meaning 300 // 10 = 30 width per block
-play_height = 600  # meaning 600 // 20 = 20 height per block
-block_size = 30
+s_height = 600
+play_width = 250  # meaning 300 // 10 = 30 width per block
+play_height = 500  # meaning 600 // 20 = 20 height per block
+block_size = 25
 
 top_left_x = (s_width - play_width) // 2
 top_left_y = s_height - play_height
@@ -139,12 +139,27 @@ shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0),
 # index 0 - 6 represent shape
 
 
-class Piece(object):
-    pass
+class Piece():
+    def __init__(self, x, y, shape):
+        self.x = x
+        self.y = y
+        self.shape = shape
+        self.shape_color = shape_colors[shapes.index(shapes)]
+        self.rotation = 0
 
 
 def create_grid(locked_positions={}):
-    pass
+    # gerar grid vazio
+    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
+
+    # checar se existe posição já preenchida
+    for y, linha in enumerate(grid):
+        for x, _ in enumerate(linha):
+            if (x, y) in locked_positions:
+                pos = locked_positions[(x, y)]
+                grid[x][y] = pos
+
+    return grid
 
 
 def convert_shape_format(shape):
@@ -160,7 +175,7 @@ def check_lost(positions):
 
 
 def get_shape():
-    pass
+    return random.choice(shapes)
 
 
 def draw_text_middle(text, size, color, surface):
